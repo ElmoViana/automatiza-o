@@ -1,0 +1,91 @@
+Olá. Essa é uma situação muito comum e um dos maiores desafios da automação web.
+
+A mensagem de erro "infelizmente, um erro ocorreu" quase certamente não é um erro no seu código Python, mas sim uma medida de segurança e anti-robô do próprio site da Bet365.
+
+Vamos detalhar por que isso acontece e o que você pode tentar fazer.
+
+Por que Isso Acontece? A Luta Contra Robôs
+Sites como a Bet365 investem pesado em tecnologia para detectar e bloquear atividades que não parecem humanas. Fazer login é uma coisa, mas a ação de apostar dinheiro é muito mais protegida. Quando seu robô tenta fazer uma aposta, o site analisa o comportamento dele e provavelmente identifica vários "sinais de alerta":
+
+Velocidade Sobre-Humana: Seu script clica, preenche e navega instantaneamente, numa velocidade que nenhum ser humano consegue. O preenchimento do login com .fill() é imediato. Um clique acontece em milissegundos após o outro.
+
+Falta de Comportamento Humano: Robôs não se comportam como pessoas. Eles não movem o mouse pela tela, não rolam a página para cima e para baixo, não pausam para "ler" ou "pensar". Eles vão direto ao ponto.
+
+Assinatura do Navegador de Automação: Mesmo com headless=False, o Playwright pode deixar "rastros" que sistemas de detecção podem identificar (como a propriedade navigator.webdriver no JavaScript do navegador).
+
+Problemas com a Sessão (Session): A sessão criada pelo seu login automatizado pode não ter todos os "tokens" ou "chaves" de segurança que uma sessão criada por um login manual teria, fazendo com que ações críticas como apostar falhem.
+
+Quando o sistema da Bet365 detecta essa atividade suspeita, ele te bloqueia preventivamente com essa mensagem de erro genérica para não dar pistas de como foi pego.
+
+O que Você Pode Tentar Fazer para "Humanizar" o Robô?
+O objetivo é fazer seu script se comportar menos como um robô e mais como uma pessoa. Aqui estão algumas técnicas, da mais simples à mais avançada:
+
+1. Adicionar Atrasos Estratégicos (Mais Simples)
+Não faça tudo instantaneamente. Adicione pausas para simular o tempo que uma pessoa levaria para pensar e agir.
+
+Use pagina.wait_for_timeout() em vez de time.sleep(), pois é a forma nativa do Playwright.
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+# ... depois de preencher a senha
+pagina.get_by_role("textbox", name="Senha").fill("............")
+
+# Espere 1.5 segundos antes de clicar em Login (simulando leitura)
+pagina.wait_for_timeout(1500) # 1500 milissegundos = 1.5 segundos
+pagina.get_by_text("Login", exact=True).first.click()
+
+# Espere 3 segundos para a página carregar após o login
+pagina.wait_for_timeout(3000)
+pagina.get_by_role("button", name="Aceitar todos").click()
+
+# Antes de tentar fazer a aposta, espere mais um pouco!
+pagina.wait_for_timeout(2000)
+# SEU CÓDIGO PARA FAZER A APOSTA VIRIA AQUI
+
+
+---------------------------------------------------------------------------------------------------------
+
+
+2. Simular Digitação Humana
+Em vez de usar .fill(), que cola o texto instantaneamente, use .press() para digitar caractere por caractere com um pequeno atraso.
+
+
+---------------------------------------------------------------------------------------
+
+# Em vez de .fill("elmobill")
+pagina.get_by_role("textbox", name="Usuário ou endereço de e-mail").press(
+    "elmobill", delay=150 # Atraso de 150ms entre cada letra
+)
+
+# Em vez de .fill("TainaMonica1213.")
+pagina.get_by_role("textbox", name="Senha").press(
+    "TainaMonica1213.", delay=120 # Atraso de 120ms
+)
+
+---------------------------------------------------------------------------------------
+
+
+3. Simular Movimentos do Mouse
+Antes de clicar, mova o mouse sobre o botão. Isso é um comportamento muito humano.
+
+---------------------------------------------------------------------------------------
+
+# Mova o mouse sobre o botão antes de clicar
+login_button = pagina.get_by_text("Login", exact=True).first
+login_button.hover()
+
+# Espere um pouquinho
+pagina.wait_for_timeout(500)
+
+# Agora clique
+login_button.click()
+
+-------------------------------------------------------------------------
+
+Conclusão e Aviso
+Burlar a detecção de robôs em um site de apostas é um jogo de "gato e rato" muito difícil. O que funciona hoje pode não funcionar amanhã.
+
+Comece adicionando os atrasos (wait_for_timeout). Essa é a mudança mais simples e que costuma ter o maior impacto. Se não funcionar, tente simular a digitação e os movimentos do mouse.
+
+Lembre-se: o problema não é que seu código tem um "erro", mas sim que o site é muito bom em se defender de robôs.
